@@ -83,3 +83,7 @@ O navegador será aberto (modo visível), o robô fará login/cadastro, coletar�
 - [ ] Parametrizar credenciais via variáveis de ambiente (`.env`)
 - [ ] Adicionar suporte a múltiplos usuários/execuções agendadas
 - [ ] Criar testes automatizados
+
+## 🤝 Créditos
+
+Utilizado Claude para criação e ativação do repositório.
