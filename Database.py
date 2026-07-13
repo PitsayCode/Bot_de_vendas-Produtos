@@ -1,8 +1,5 @@
 import sqlite3
 
-conn = sqlite3.connect('BancoDeDados.db')
-
-
 def criar_tabela_user():
     with sqlite3.connect('BancoDeDados.db') as conn:
         cursor = conn.cursor()
@@ -21,10 +18,11 @@ def criar_tabela_user():
             estado TEXT NOT NULL,
             cep TEXT NOT NULL,
             numero_telefone TEXT NOT NULL,
-            pais TEXT NOT NULL,
+            pais TEXT NOT NULL
         );''')
         conn.commit()
-     
+    conn.close()
+
 def criar_tabela_produtos():
     with sqlite3.connect('BancoDeDados.db') as conn:
         cursor = conn.cursor()
@@ -38,6 +36,7 @@ def criar_tabela_produtos():
             marca TEXT NOT NULL
         );''')
         conn.commit()
+    conn.close()
 
 def inserir_produto(produto, preco, disponibilidade, condicao, marca):
     with sqlite3.connect('BancoDeDados.db') as conn:
@@ -45,8 +44,14 @@ def inserir_produto(produto, preco, disponibilidade, condicao, marca):
         cursor.execute('''
             INSERT INTO produtos (produto, preco, disponibilidade, condicao, marca)
             VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(produto) DO UPDATE SET
+                preco = excluded.preco,
+                disponibilidade = excluded.disponibilidade,
+                condicao = excluded.condicao,
+                marca = excluded.marca
         ''', (produto, preco, disponibilidade, condicao, marca))
         conn.commit()
+    conn.close()
 
 def inserir_usuario(name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais):
     with sqlite3.connect('BancoDeDados.db') as conn:
@@ -61,14 +66,17 @@ def inserir_usuario(name, last_name, email, senha, dia, mes, ano, endereco, cida
                 INSERT INTO users (name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais))
-        conn.commit()     
+        conn.commit()
+    conn.close()
 
 def buscar_usuario():
     with sqlite3.connect('BancoDeDados.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM users;')
-        return cursor.fetchall()
-    
+        usuarios = cursor.fetchall()
+    conn.close()
+    return usuarios
+
 
 def buscando_os_produtos():
     with sqlite3.connect('BancoDeDados.db') as conn:
@@ -77,6 +85,7 @@ def buscando_os_produtos():
         SELECT * FROM produtos;
         ''')
         produtos = cursor.fetchall()
-        return produtos
+    conn.close()
+    return produtos
 
 

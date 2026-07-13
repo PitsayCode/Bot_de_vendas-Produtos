@@ -16,6 +16,7 @@ with sync_playwright() as pw:
     page.goto("https://automationexercise.com/")
     Database.criar_tabela_produtos()
     Database.criar_tabela_user()
+    
     NOME = os.getenv("NAME")
     SOBRENOME = os.getenv("LAST_NAME")
     EMAIL = os.getenv("EMAIL")
@@ -31,42 +32,44 @@ with sync_playwright() as pw:
     PAIS = os.getenv("PAIS")
 
     Acesso =auth.login(page, EMAIL, SENHA)
-    if Acesso:
-        print("Login successful")  
-    else:
-        user = auth.register(page, NOME, SOBRENOME, EMAIL, SENHA, DIA, MES, ANO, ENDERECO, CIDADE, ESTADO, CEP, NUMERO_TELEFONE, PAIS)
-        if user:
-            Database.inserir_usuario(
-                name=NOME,
-                last_name=SOBRENOME,
-                email=EMAIL,
-                senha=SENHA,
-                dia=DIA,
-                mes=MES,
-                ano=ANO,
-                endereco=ENDERECO,
-                cidade=CIDADE,
-                estado=ESTADO,
-                cep=CEP,
-                numero_telefone=NUMERO_TELEFONE,
-                pais=PAIS
+    try:
+        if Acesso:
+            print("Login successful")  
+        else:
+            user = auth.register(page, NOME, SOBRENOME, EMAIL, SENHA, DIA, MES, ANO, ENDERECO, CIDADE, ESTADO, CEP, NUMERO_TELEFONE, PAIS)
+            if user:
+                Database.inserir_usuario(
+                    name=NOME,
+                    last_name=SOBRENOME,
+                    email=EMAIL,
+                    senha=SENHA,
+                    dia=DIA,
+                    mes=MES,
+                    ano=ANO,
+                    endereco=ENDERECO,
+                    cidade=CIDADE,
+                    estado=ESTADO,
+                    cep=CEP,
+                    numero_telefone=NUMERO_TELEFONE,
+                    pais=PAIS
+                )
+
+        dados = scraper.acessar_itens(page)
+        for produto in dados:
+            Database.inserir_produto(
+                    produto=produto[0],
+                    preco=produto[1],
+                    disponibilidade=produto[2],
+                    condicao=produto[3],
+                    marca=produto[4]
             )
 
-    dados = scraper.acessar_itens(page)
-    for produto in dados:
-        Database.inserir_produto(
-                produto=produto[0],
-                preco=produto[1],
-                disponibilidade=produto[2],
-                condicao=produto[3],
-                marca=produto[4]
-        )
 
 
 
-
-    exporte.exportar_dados()
-    print("Dados exportados com sucesso para relatorio.xlsx")
-    
+        exporte.exportar_dados()
+        print("Dados exportados com sucesso para relatorio.xlsx")
+    except Exception as e:
+        print(e)
     
     browser.close()

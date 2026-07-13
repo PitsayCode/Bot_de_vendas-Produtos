@@ -4,7 +4,7 @@ Robô de automação web construído com **Playwright** que realiza login (ou ca
 
 ## 📋 O que o robô faz
 
-1. **Autenticação automática** — tenta logar com um usuário de teste; caso o login falhe, preenche todo o formulário de cadastro (nome, endereço, data de nascimento, telefone, etc.) e cria a conta automaticamente.
+1. **Autenticação automática** — tenta logar com um usuário configurado via variáveis de ambiente; caso o login falhe, preenche todo o formulário de cadastro (nome, endereço, data de nascimento, telefone, etc.) e cria a conta automaticamente.
 2. **Persistência de usuário** — salva os dados do usuário cadastrado em um banco SQLite local, evitando duplicidade.
 3. **Web scraping de produtos** — navega por todos os produtos da vitrine e extrai:
    - Nome do produto
@@ -12,7 +12,7 @@ Robô de automação web construído com **Playwright** que realiza login (ou ca
    - Disponibilidade
    - Condição
    - Marca
-4. **Armazenamento em banco de dados** — grava cada produto coletado em uma tabela SQLite (`produtos`).
+4. **Armazenamento em banco de dados** — grava cada produto coletado em uma tabela SQLite (`produtos`). Se o produto já existir, **atualiza o preço e os demais dados** em vez de duplicar ou falhar.
 5. **Exportação para Excel** — gera automaticamente um arquivo `relatorio.xlsx` com todos os produtos coletados, pronto para análise.
 
 ## 🗂️ Estrutura do projeto
@@ -24,6 +24,7 @@ Robô de automação web construído com **Playwright** que realiza login (ou ca
 ├── scraper.py       # Extração dos dados de produtos na página
 ├── Database.py      # Criação das tabelas e operações no SQLite
 ├── exporte.py       # Exportação dos dados do banco para um arquivo .xlsx
+├── .env             # Credenciais e dados de cadastro (não versionado)
 └── requirements.txt # Dependências do projeto
 ```
 
@@ -33,6 +34,17 @@ Robô de automação web construído com **Playwright** que realiza login (ou ca
 - [Playwright](https://playwright.dev/python/) — automação de navegador
 - [SQLite3](https://docs.python.org/3/library/sqlite3.html) — banco de dados local
 - [openpyxl](https://openpyxl.readthedocs.io/) — geração de planilhas Excel
+- [python-dotenv](https://pypi.org/project/python-dotenv/) — carregamento de variáveis de ambiente
+
+## 🔧 Mudanças da refatoração
+
+Esta versão evoluiu a partir do protótipo inicial, focando em segurança e resiliência da execução:
+
+- **Credenciais fora do código**: email, senha e todos os dados de cadastro (nome, endereço, telefone, etc.) saíram do código-fonte e agora são lidos de um arquivo `.env` via `python-dotenv`, evitando expor dados sensíveis no repositório.
+- **Conexões de banco mais seguras**: `Database.py` não mantém mais uma conexão SQLite global aberta durante toda a execução. Cada função abre sua própria conexão (`with sqlite3.connect(...)`) e a fecha explicitamente ao final, evitando conexões penduradas.
+- **Upsert de produtos**: `inserir_produto()` agora usa `INSERT ... ON CONFLICT(produto) DO UPDATE` — ao rodar o robô novamente, um produto já existente tem seu preço e demais dados **atualizados**, em vez de causar um erro de violação de `UNIQUE constraint`.
+- **Coleta resiliente**: em `scraper.py`, o tratamento de erro (`try/except`) agora envolve cada produto individualmente dentro do loop, então uma falha ao extrair um item não interrompe a coleta dos demais.
+- **Execução mais robusta**: `main.py` agora envolve o fluxo principal (login/cadastro, scraping, exportação) em um `try/except`, garantindo que o navegador seja fechado corretamente mesmo se algo falhar no meio da execução.
 
 ## 🚀 Como executar
 
@@ -58,7 +70,27 @@ pip install -r requirements.txt
 playwright install
 ```
 
-### 4. Execute o robô
+### 4. Configure o arquivo `.env`
+
+Crie um arquivo `.env` na raiz do projeto com as variáveis abaixo (os valores de dia/mês/país devem corresponder exatamente às opções do formulário do site, ex: `MES` numérico e `PAIS` por extenso como `United States`):
+
+```
+NAME=
+LAST_NAME=
+EMAIL=
+SENHA=
+DIA=
+MES=
+ANO=
+ENDERECO=
+CIDADE=
+ESTADO=
+CEP=
+NUMERO_TELEFONE=
+PAIS=
+```
+
+### 5. Execute o robô
 
 ```bash
 python main.py
@@ -79,10 +111,13 @@ O navegador será aberto (modo visível), o robô fará login/cadastro, coletar�
 
 ## 📌 Próximos passos (ideias de evolução)
 
-- [ ] Adicionar tratamento de erros mais robusto e logging
-- [ ] Parametrizar credenciais via variáveis de ambiente (`.env`)
-- [ ] Adicionar suporte a múltiplos usuários/execuções agendadas
-- [ ] Criar testes automatizados
+- [ ] **Histórico de preços**: hoje o upsert mantém só o preço mais recente de cada produto; guardar cada coleta com data/hora permitiria analisar variação de preço ao longo do tempo (o objetivo original de um "analisador de preços").
+- [ ] **Interface para credenciais**: substituir o `.env` fixo por uma interface simples (ou um pop-up) para inserir usuário/senha na hora de rodar, permitindo que outras pessoas usem o robô com suas próprias contas.
+- [ ] **Execução agendada**: rodar em modo `headless=True` e agendar via Task Scheduler/cron para coletas periódicas automáticas.
+- [ ] **Logging estruturado**: trocar os `print()` de erro por um logger de verdade, com níveis (`info`, `warning`, `error`) e, idealmente, gravação em arquivo.
+- [ ] **Corrigir incompatibilidade em `inserir_usuario`**: o `INSERT` da tabela `users` lista 13 colunas mas o `VALUES` tem 14 `?`, o que gera erro ao cadastrar um usuário realmente novo (só não aparece porque o teste tem reutilizado um usuário já existente).
+- [ ] **Conversão de tipos**: armazenar `preco` como `float` antes de gravar no banco, em vez de depender da coerção implícita do SQLite.
+- [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, upsert) com testes unitários usando um banco SQLite em memória.
 
 ## 🤝 Créditos
 
