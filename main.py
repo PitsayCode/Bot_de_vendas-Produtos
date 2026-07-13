@@ -10,7 +10,7 @@ load_dotenv()
 # IMPORTANTE: O código abaixo é apenas um exemplo de como você pode usar o Playwright para automatizar o login e a coleta de dados de um site. Certifique-se de ter as bibliotecas necessárias instaladas e configure corretamente o ambiente antes de executar o código.
 
 with sync_playwright() as pw:
-    browser = pw.chromium.launch(headless=False)
+    browser = pw.chromium.launch(headless=True)
     page = browser.new_page()
     page.route("**/*", lambda route: route.abort() if "automationexercise.com" not in route.request.url else route.continue_())
     page.goto("https://automationexercise.com/")

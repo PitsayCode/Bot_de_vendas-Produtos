@@ -49,6 +49,7 @@ Esta versão evoluiu a partir do protótipo inicial, focando em segurança e res
 - **Correção no `inserir_usuario`**: o `INSERT` tinha 13 colunas mas o `VALUES` continha 14 `?`, o que quebrava o cadastro de qualquer usuário novo. Ajustado para 13 `?`, batendo com as colunas.
 - **Conversão de tipos**: `preco` agora é convertido para `float` em `scraper.py` no momento da extração, em vez de depender da coerção implícita do SQLite ao gravar uma string numérica.
 - **Navegação mais estável**: `page.go_back()` em `scraper.py` passou a usar `wait_until="domcontentloaded"`, evitando timeouts de 30s causados pela espera do evento `"load"` completo (recursos externos lentos no site).
+- **Execução em segundo plano**: `browser = pw.chromium.launch(headless=True)` em `main.py` — o navegador não abre mais uma janela visível, permitindo rodar o robô em background ou via agendamento (ver seção [Execução agendada](#-execução-agendada-opcional)).
 
 ## 🚀 Como executar
 
@@ -100,7 +101,23 @@ PAIS=
 python main.py
 ```
 
-O navegador será aberto (modo visível), o robô fará login/cadastro, coletará os produtos e, ao final, o arquivo `relatorio.xlsx` será gerado na raiz do projeto com todos os dados coletados.
+O robô roda em segundo plano (sem abrir janela do navegador), fará login/cadastro, coletará os produtos e, ao final, o arquivo `relatorio.xlsx` será gerado na raiz do projeto com todos os dados coletados.
+
+## ⏰ Execução agendada (opcional)
+
+Com `headless=True`, o robô não precisa mais de uma janela visível pra rodar, então dá pra automatizar a execução periódica sem precisar disparar `python main.py` manualmente toda vez. Isso **não é configurado no código** — é feito inteiramente pelo agendador de tarefas do sistema operacional, fora do repositório:
+
+**Windows (Agendador de Tarefas):**
+1. Abra o **Agendador de Tarefas** e crie uma **Tarefa Básica**.
+2. Defina o gatilho (ex: diariamente, a cada X horas).
+3. Em "Ação", escolha **Iniciar um programa**:
+   - **Programa/script**: caminho do `python.exe` (de preferência o da `venv`, ex: `...\venv\Scripts\python.exe`).
+   - **Argumentos**: caminho completo do `main.py`.
+   - **Iniciar em**: a pasta raiz do projeto (importante — o script usa caminhos relativos para o `.env`, o `BancoDeDados.db` e o `relatorio.xlsx`).
+
+**Linux/Mac (cron):** adicionar uma linha no `crontab -e` apontando pro Python da `venv` e pro `main.py`, com o `cwd` correto (ou usando `cd` dentro do próprio comando do cron).
+
+Como essa configuração vive no sistema operacional (não em um arquivo do projeto), ela precisa ser refeita em qualquer máquina nova onde o robô for rodar de forma agendada.
 
 ## 📊 Saída gerada
 
@@ -117,7 +134,6 @@ O navegador será aberto (modo visível), o robô fará login/cadastro, coletar�
 
 - [ ] **Histórico de preços**: hoje o upsert mantém só o preço mais recente de cada produto; guardar cada coleta com data/hora permitiria analisar variação de preço ao longo do tempo (o objetivo original de um "analisador de preços").
 - [ ] **Interface para credenciais**: substituir o `.env` fixo por uma interface simples (ou um pop-up) para inserir usuário/senha na hora de rodar, permitindo que outras pessoas usem o robô com suas próprias contas.
-- [ ] **Execução agendada**: rodar em modo `headless=True` e agendar via Task Scheduler/cron para coletas periódicas automáticas.
 - [ ] **Logging estruturado**: trocar os `print()` de erro por um logger de verdade, com níveis (`info`, `warning`, `error`) e, idealmente, gravação em arquivo.
 - [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, upsert) com testes unitários usando um banco SQLite em memória.
 
