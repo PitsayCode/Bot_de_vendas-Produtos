@@ -1,8 +1,8 @@
 def acessar_itens(page):
     botao = page.get_by_role("link", name=" View Product")
     dados = []
-    try:
-        for view_product in botao.all():
+    for view_product in botao.all():
+        try:
             view_product.click()
             nome = page.locator(".product-information h2").inner_text()
             preco_antes = page.locator(".product-information span span").inner_text()
@@ -14,7 +14,7 @@ def acessar_itens(page):
             
             
             page.go_back()
-    except Exception as e:
-        print(f"Error occurred while accessing items: {e}")
+        except Exception as e:
+            print(f"Error occurred while accessing items: {e}")
         
     return dados
