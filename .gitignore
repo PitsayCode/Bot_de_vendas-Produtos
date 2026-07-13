@@ -4,3 +4,4 @@ __pycache__/
 BancoDeDados.db
 relatorio.xlsx
 .claude
+.env
