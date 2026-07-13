@@ -36,7 +36,7 @@ def register(page, NOME, SOBRENOME, EMAIL, SENHA, DIA, MES, ANO, ENDERECO, CIDAD
         page.get_by_role("textbox", name="Mobile Number *").fill(NUMERO_TELEFONE)
         page.get_by_role("button", name="Create Account").click()
         
-        page.get_by_role("link", name="Continue").click().visible()
+        page.get_by_role("link", name="Continue").click()
         return True
     except Exception as e:
         print(f"Error occurred while registering: {e}")

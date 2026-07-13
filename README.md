@@ -45,6 +45,8 @@ Esta versão evoluiu a partir do protótipo inicial, focando em segurança e res
 - **Upsert de produtos**: `inserir_produto()` agora usa `INSERT ... ON CONFLICT(produto) DO UPDATE` — ao rodar o robô novamente, um produto já existente tem seu preço e demais dados **atualizados**, em vez de causar um erro de violação de `UNIQUE constraint`.
 - **Coleta resiliente**: em `scraper.py`, o tratamento de erro (`try/except`) agora envolve cada produto individualmente dentro do loop, então uma falha ao extrair um item não interrompe a coleta dos demais.
 - **Execução mais robusta**: `main.py` agora envolve o fluxo principal (login/cadastro, scraping, exportação) em um `try/except`, garantindo que o navegador seja fechado corretamente mesmo se algo falhar no meio da execução.
+- **Correção no cadastro (`auth.py`)**: `register()` chamava `.click().visible()` após confirmar o cadastro — como `.click()` não retorna nada no Playwright, essa chamada sempre lançava erro e fazia a função retornar `False` mesmo com o cadastro concluído no site. Removida a chamada indevida a `.visible()`.
+- **Correção no `inserir_usuario`**: o `INSERT` tinha 13 colunas mas o `VALUES` continha 14 `?`, o que quebrava o cadastro de qualquer usuário novo. Ajustado para 13 `?`, batendo com as colunas.
 
 ## 🚀 Como executar
 
@@ -115,7 +117,6 @@ O navegador será aberto (modo visível), o robô fará login/cadastro, coletar�
 - [ ] **Interface para credenciais**: substituir o `.env` fixo por uma interface simples (ou um pop-up) para inserir usuário/senha na hora de rodar, permitindo que outras pessoas usem o robô com suas próprias contas.
 - [ ] **Execução agendada**: rodar em modo `headless=True` e agendar via Task Scheduler/cron para coletas periódicas automáticas.
 - [ ] **Logging estruturado**: trocar os `print()` de erro por um logger de verdade, com níveis (`info`, `warning`, `error`) e, idealmente, gravação em arquivo.
-- [ ] **Corrigir incompatibilidade em `inserir_usuario`**: o `INSERT` da tabela `users` lista 13 colunas mas o `VALUES` tem 14 `?`, o que gera erro ao cadastrar um usuário realmente novo (só não aparece porque o teste tem reutilizado um usuário já existente).
 - [ ] **Conversão de tipos**: armazenar `preco` como `float` antes de gravar no banco, em vez de depender da coerção implícita do SQLite.
 - [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, upsert) com testes unitários usando um banco SQLite em memória.
 

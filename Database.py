@@ -64,7 +64,7 @@ def inserir_usuario(name, last_name, email, senha, dia, mes, ano, endereco, cida
         if user_existente is None:
             cursor.execute('''
                 INSERT INTO users (name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais))
         conn.commit()
     conn.close()

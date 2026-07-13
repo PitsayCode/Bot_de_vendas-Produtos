@@ -1,8 +1,6 @@
 from openpyxl import Workbook
 from Database import buscando_os_produtos
 
-from openpyxl import Workbook
-
 def exportar_dados():
 
     wb = Workbook()
