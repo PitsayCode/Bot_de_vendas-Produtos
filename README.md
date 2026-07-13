@@ -47,6 +47,8 @@ Esta versão evoluiu a partir do protótipo inicial, focando em segurança e res
 - **Execução mais robusta**: `main.py` agora envolve o fluxo principal (login/cadastro, scraping, exportação) em um `try/except`, garantindo que o navegador seja fechado corretamente mesmo se algo falhar no meio da execução.
 - **Correção no cadastro (`auth.py`)**: `register()` chamava `.click().visible()` após confirmar o cadastro — como `.click()` não retorna nada no Playwright, essa chamada sempre lançava erro e fazia a função retornar `False` mesmo com o cadastro concluído no site. Removida a chamada indevida a `.visible()`.
 - **Correção no `inserir_usuario`**: o `INSERT` tinha 13 colunas mas o `VALUES` continha 14 `?`, o que quebrava o cadastro de qualquer usuário novo. Ajustado para 13 `?`, batendo com as colunas.
+- **Conversão de tipos**: `preco` agora é convertido para `float` em `scraper.py` no momento da extração, em vez de depender da coerção implícita do SQLite ao gravar uma string numérica.
+- **Navegação mais estável**: `page.go_back()` em `scraper.py` passou a usar `wait_until="domcontentloaded"`, evitando timeouts de 30s causados pela espera do evento `"load"` completo (recursos externos lentos no site).
 
 ## 🚀 Como executar
 
@@ -117,7 +119,6 @@ O navegador será aberto (modo visível), o robô fará login/cadastro, coletar�
 - [ ] **Interface para credenciais**: substituir o `.env` fixo por uma interface simples (ou um pop-up) para inserir usuário/senha na hora de rodar, permitindo que outras pessoas usem o robô com suas próprias contas.
 - [ ] **Execução agendada**: rodar em modo `headless=True` e agendar via Task Scheduler/cron para coletas periódicas automáticas.
 - [ ] **Logging estruturado**: trocar os `print()` de erro por um logger de verdade, com níveis (`info`, `warning`, `error`) e, idealmente, gravação em arquivo.
-- [ ] **Conversão de tipos**: armazenar `preco` como `float` antes de gravar no banco, em vez de depender da coerção implícita do SQLite.
 - [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, upsert) com testes unitários usando um banco SQLite em memória.
 
 ## 🤝 Créditos
