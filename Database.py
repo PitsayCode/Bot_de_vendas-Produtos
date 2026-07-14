@@ -29,11 +29,12 @@ def criar_tabela_produtos():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS produtos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            produto TEXT NOT NULL UNIQUE,
+            produto TEXT NOT NULL,
             preco REAL NOT NULL,
             disponibilidade TEXT NOT NULL,
             condicao TEXT NOT NULL,
-            marca TEXT NOT NULL
+            marca TEXT NOT NULL,
+            data DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         );''')
         conn.commit()
     conn.close()
@@ -44,11 +45,6 @@ def inserir_produto(produto, preco, disponibilidade, condicao, marca):
         cursor.execute('''
             INSERT INTO produtos (produto, preco, disponibilidade, condicao, marca)
             VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(produto) DO UPDATE SET
-                preco = excluded.preco,
-                disponibilidade = excluded.disponibilidade,
-                condicao = excluded.condicao,
-                marca = excluded.marca
         ''', (produto, preco, disponibilidade, condicao, marca))
         conn.commit()
     conn.close()

@@ -19,16 +19,14 @@ def exportar_dados():
         "Preço",
         "Disponibilidade",
         "Condição",
-        "Marca"
+        "Marca",
+        "data"
     ])
 
     
     for produto in produtos:
         ws_produtos.append(produto)
 
-    # ======================
-    # Aba Usuários
-    # ======================
 
     # Salvar arquivo
     wb.save("relatorio.xlsx")

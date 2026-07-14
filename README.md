@@ -12,7 +12,7 @@ Robô de automação web construído com **Playwright** que realiza login (ou ca
    - Disponibilidade
    - Condição
    - Marca
-4. **Armazenamento em banco de dados** — grava cada produto coletado em uma tabela SQLite (`produtos`). Se o produto já existir, **atualiza o preço e os demais dados** em vez de duplicar ou falhar.
+4. **Histórico de preços** — cada execução grava uma **nova linha** por produto coletado na tabela SQLite (`produtos`), com data/hora automática da coleta. Rodando o robô várias vezes, é possível acompanhar a variação de preço de cada produto ao longo do tempo.
 5. **Exportação para Excel** — gera automaticamente um arquivo `relatorio.xlsx` com todos os produtos coletados, pronto para análise.
 
 ## 🗂️ Estrutura do projeto
@@ -42,14 +42,15 @@ Esta versão evoluiu a partir do protótipo inicial, focando em segurança e res
 
 - **Credenciais fora do código**: email, senha e todos os dados de cadastro (nome, endereço, telefone, etc.) saíram do código-fonte e agora são lidos de um arquivo `.env` via `python-dotenv`, evitando expor dados sensíveis no repositório.
 - **Conexões de banco mais seguras**: `Database.py` não mantém mais uma conexão SQLite global aberta durante toda a execução. Cada função abre sua própria conexão (`with sqlite3.connect(...)`) e a fecha explicitamente ao final, evitando conexões penduradas.
-- **Upsert de produtos**: `inserir_produto()` agora usa `INSERT ... ON CONFLICT(produto) DO UPDATE` — ao rodar o robô novamente, um produto já existente tem seu preço e demais dados **atualizados**, em vez de causar um erro de violação de `UNIQUE constraint`.
+- **Histórico de preços**: a tabela `produtos` deixou de ter `UNIQUE` no nome do produto e ganhou uma coluna `data DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`, preenchida automaticamente pelo SQLite a cada `INSERT`. Assim, cada coleta gera uma linha nova (em vez de sobrescrever a anterior), permitindo comparar o preço do mesmo produto em datas diferentes.
 - **Coleta resiliente**: em `scraper.py`, o tratamento de erro (`try/except`) agora envolve cada produto individualmente dentro do loop, então uma falha ao extrair um item não interrompe a coleta dos demais.
 - **Execução mais robusta**: `main.py` agora envolve o fluxo principal (login/cadastro, scraping, exportação) em um `try/except`, garantindo que o navegador seja fechado corretamente mesmo se algo falhar no meio da execução.
 - **Correção no cadastro (`auth.py`)**: `register()` chamava `.click().visible()` após confirmar o cadastro — como `.click()` não retorna nada no Playwright, essa chamada sempre lançava erro e fazia a função retornar `False` mesmo com o cadastro concluído no site. Removida a chamada indevida a `.visible()`.
 - **Correção no `inserir_usuario`**: o `INSERT` tinha 13 colunas mas o `VALUES` continha 14 `?`, o que quebrava o cadastro de qualquer usuário novo. Ajustado para 13 `?`, batendo com as colunas.
 - **Conversão de tipos**: `preco` agora é convertido para `float` em `scraper.py` no momento da extração, em vez de depender da coerção implícita do SQLite ao gravar uma string numérica.
 - **Navegação mais estável**: `page.go_back()` em `scraper.py` passou a usar `wait_until="domcontentloaded"`, evitando timeouts de 30s causados pela espera do evento `"load"` completo (recursos externos lentos no site).
-- **Execução em segundo plano**: `browser = pw.chromium.launch(headless=True)` em `main.py` — o navegador não abre mais uma janela visível, permitindo rodar o robô em background ou via agendamento (ver seção [Execução agendada](#-execução-agendada-opcional)).
+- **Fim da falha em cascata na coleta**: o clique em "View Product" (`scraper.py`) usa `no_wait_after=True`, evitando o mesmo tipo de timeout de 30s do item anterior. Além disso, `page.go_back()` foi movido para um bloco `finally`, garantindo que a página volte para a listagem mesmo quando um produto falha — antes, uma falha nessa etapa deixava a página "presa", fazendo todos os produtos seguintes falharem também.
+- **Execução em segundo plano**: `browser = pw.chromium.launch(headless=True)` em `main.py` permite rodar o robô sem abrir janela do navegador, útil para execução em background ou agendada (ver seção [Execução agendada](#-execução-agendada-opcional)). Durante o desenvolvimento/depuração, pode ser útil deixar `headless=False` para acompanhar visualmente o que o robô está fazendo.
 
 ## 🚀 Como executar
 
@@ -121,8 +122,8 @@ Como essa configuração vive no sistema operacional (não em um arquivo do proj
 
 ## 📊 Saída gerada
 
-- **`BancoDeDados.db`** — banco SQLite com as tabelas `users` e `produtos`.
-- **`relatorio.xlsx`** — planilha com a aba **Produtos**, contendo ID, nome, preço, disponibilidade, condição e marca de cada item coletado.
+- **`BancoDeDados.db`** — banco SQLite com as tabelas `users` e `produtos`. A tabela `produtos` acumula uma linha por coleta (com data/hora), permitindo consultar o histórico de preços de cada item.
+- **`relatorio.xlsx`** — planilha com a aba **Produtos**, contendo ID, nome, preço, disponibilidade, condição, marca e data da coleta de cada item.
 
 ## 📝 Observações
 
@@ -132,10 +133,10 @@ Como essa configuração vive no sistema operacional (não em um arquivo do proj
 
 ## 📌 Próximos passos (ideias de evolução)
 
-- [ ] **Histórico de preços**: hoje o upsert mantém só o preço mais recente de cada produto; guardar cada coleta com data/hora permitiria analisar variação de preço ao longo do tempo (o objetivo original de um "analisador de preços").
 - [ ] **Interface para credenciais**: substituir o `.env` fixo por uma interface simples (ou um pop-up) para inserir usuário/senha na hora de rodar, permitindo que outras pessoas usem o robô com suas próprias contas.
 - [ ] **Logging estruturado**: trocar os `print()` de erro por um logger de verdade, com níveis (`info`, `warning`, `error`) e, idealmente, gravação em arquivo.
-- [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, upsert) com testes unitários usando um banco SQLite em memória.
+- [ ] **Análise sobre o histórico**: hoje o histórico de preços só é coletado; ainda falta uma forma de comparar/visualizar a variação de preço entre coletas (ex: gráfico, alerta de queda de preço).
+- [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, histórico de preços) com testes unitários usando um banco SQLite em memória.
 
 ## 🤝 Créditos
 

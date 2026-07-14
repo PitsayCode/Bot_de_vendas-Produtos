@@ -3,7 +3,7 @@ def acessar_itens(page):
     dados = []
     for view_product in botao.all():
         try:
-            view_product.click()
+            view_product.click(no_wait_after=True)
             nome = page.locator(".product-information h2").inner_text()
             preco_antes = page.locator(".product-information span span").inner_text()
             preco = float(preco_antes.replace("Rs. ", ""))  # 500.0
@@ -11,10 +11,9 @@ def acessar_itens(page):
             condicao = page.locator(".product-information p:has-text('Condition')").inner_text().split(": ")[1]
             marca = page.locator(".product-information p:has-text('Brand')").inner_text().split(": ")[1]
             dados.append((nome, preco, disponibilidade, condicao, marca))
-            
-            
-            page.go_back(wait_until="domcontentloaded")
         except Exception as e:
             print(f"Error occurred while accessing items: {e}")
+        finally:
+            page.go_back(wait_until="domcontentloaded")
         
     return dados
