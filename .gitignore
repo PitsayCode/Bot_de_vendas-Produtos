@@ -5,3 +5,5 @@ BancoDeDados.db
 relatorio.xlsx
 .claude
 .env
+teste.db
+.pytest_cache/

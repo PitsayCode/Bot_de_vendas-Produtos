@@ -35,6 +35,7 @@ Robô de automação web construído com **Playwright** que realiza login (ou ca
 - [SQLite3](https://docs.python.org/3/library/sqlite3.html) — banco de dados local
 - [openpyxl](https://openpyxl.readthedocs.io/) — geração de planilhas Excel
 - [python-dotenv](https://pypi.org/project/python-dotenv/) — carregamento de variáveis de ambiente
+- [pytest](https://docs.pytest.org/) — testes automatizados
 
 ## 🔧 Mudanças da refatoração
 
@@ -51,6 +52,18 @@ Esta versão evoluiu a partir do protótipo inicial, focando em segurança e res
 - **Navegação mais estável**: `page.go_back()` em `scraper.py` passou a usar `wait_until="domcontentloaded"`, evitando timeouts de 30s causados pela espera do evento `"load"` completo (recursos externos lentos no site).
 - **Fim da falha em cascata na coleta**: o clique em "View Product" (`scraper.py`) usa `no_wait_after=True`, evitando o mesmo tipo de timeout de 30s do item anterior. Além disso, `page.go_back()` foi movido para um bloco `finally`, garantindo que a página volte para a listagem mesmo quando um produto falha — antes, uma falha nessa etapa deixava a página "presa", fazendo todos os produtos seguintes falharem também.
 - **Execução em segundo plano**: `browser = pw.chromium.launch(headless=True)` em `main.py` permite rodar o robô sem abrir janela do navegador, útil para execução em background ou agendada (ver seção [Execução agendada](#-execução-agendada-opcional)). Durante o desenvolvimento/depuração, pode ser útil deixar `headless=False` para acompanhar visualmente o que o robô está fazendo.
+- **Banco testável**: todas as funções de `Database.py` agora recebem um parâmetro `db_path='BancoDeDados.db'` (com esse valor como padrão). Isso permite que os testes automatizados usem um banco separado (`teste.db`), sem tocar no banco de dados real.
+
+## 🧪 Testes automatizados
+
+O projeto usa [pytest](https://docs.pytest.org/) para testar as funções de `Database.py` de forma isolada, sem depender do navegador nem do banco de dados real.
+
+```bash
+pip install pytest
+pytest
+```
+
+O `pytest` varre o projeto em busca de arquivos `test_*.py` e executa as funções `test_*` dentro deles. Hoje existe `test_database.py`, cobrindo o fluxo de inserir um produto e conferir que os dados voltam corretos ao consultar. Como esse teste usa um `db_path` próprio (`teste.db`, listado no `.gitignore`), ele nunca mistura dados de teste com o `BancoDeDados.db` real.
 
 ## 🚀 Como executar
 
@@ -136,7 +149,7 @@ Como essa configuração vive no sistema operacional (não em um arquivo do proj
 - [ ] **Interface para credenciais**: substituir o `.env` fixo por uma interface simples (ou um pop-up) para inserir usuário/senha na hora de rodar, permitindo que outras pessoas usem o robô com suas próprias contas.
 - [ ] **Logging estruturado**: trocar os `print()` de erro por um logger de verdade, com níveis (`info`, `warning`, `error`) e, idealmente, gravação em arquivo.
 - [ ] **Análise sobre o histórico**: hoje o histórico de preços só é coletado; ainda falta uma forma de comparar/visualizar a variação de preço entre coletas (ex: gráfico, alerta de queda de preço).
-- [ ] **Testes automatizados**: cobrir as funções de `Database.py` (schema, histórico de preços) com testes unitários usando um banco SQLite em memória.
+- [ ] **Mais cobertura de testes**: hoje só `inserir_produto`/`buscando_os_produtos` têm teste; faltam `criar_tabela_user`, `inserir_usuario` e `buscar_usuario`.
 
 ## 🤝 Créditos
 

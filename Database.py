@@ -1,7 +1,7 @@
 import sqlite3
 
-def criar_tabela_user():
-    with sqlite3.connect('BancoDeDados.db') as conn:
+def criar_tabela_user(db_path='BancoDeDados.db'):
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -23,8 +23,8 @@ def criar_tabela_user():
         conn.commit()
     conn.close()
 
-def criar_tabela_produtos():
-    with sqlite3.connect('BancoDeDados.db') as conn:
+def criar_tabela_produtos(db_path='BancoDeDados.db'):
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS produtos (
@@ -39,8 +39,8 @@ def criar_tabela_produtos():
         conn.commit()
     conn.close()
 
-def inserir_produto(produto, preco, disponibilidade, condicao, marca):
-    with sqlite3.connect('BancoDeDados.db') as conn:
+def inserir_produto(produto, preco, disponibilidade, condicao, marca,db_path='BancoDeDados.db'):
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO produtos (produto, preco, disponibilidade, condicao, marca)
@@ -49,8 +49,8 @@ def inserir_produto(produto, preco, disponibilidade, condicao, marca):
         conn.commit()
     conn.close()
 
-def inserir_usuario(name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais):
-    with sqlite3.connect('BancoDeDados.db') as conn:
+def inserir_usuario(name, last_name, email, senha, dia, mes, ano, endereco, cidade, estado, cep, numero_telefone, pais,db_path='BancoDeDados.db'):
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
         "SELECT * FROM users WHERE name = ? OR email = ?",
@@ -65,8 +65,8 @@ def inserir_usuario(name, last_name, email, senha, dia, mes, ano, endereco, cida
         conn.commit()
     conn.close()
 
-def buscar_usuario():
-    with sqlite3.connect('BancoDeDados.db') as conn:
+def buscar_usuario(db_path='BancoDeDados.db'):
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM users;')
         usuarios = cursor.fetchall()
@@ -74,8 +74,8 @@ def buscar_usuario():
     return usuarios
 
 
-def buscando_os_produtos():
-    with sqlite3.connect('BancoDeDados.db') as conn:
+def buscando_os_produtos(db_path='BancoDeDados.db'):
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
         SELECT * FROM produtos;
